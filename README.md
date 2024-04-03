@@ -38,10 +38,10 @@ python main.py ATCGATCGATCG ATGCTAGCTAG global 2 -1 -2
 Note: In Mac python3 should be used instead of python for the command.
 
 The output will contain:
-- The optimal alignment between both strings, with a line in between describing the alignment:
-  - "|": match
-  - ".": mismatch
-  - " ": gap
+- The optimal alignment between both strings, with a string in between describing the alignment:
+  - line (|) match
+  - dot (.): mismatch
+  - space ( ): gap
 - The method used to align the strings.
 - The overall alignment score (last value for global, largest value for local).
 - The score matrix.
@@ -76,9 +76,6 @@ G -24 -20 -16 -12 -8  -4  -3   1   2   3   4   8
 
 Created score matrix with highlighted moves (saved as score_matrix.html) in the SequenceAlignment directory.
 ```
-
-The html file contains the dataframe as a table with the moves for the optimal alignment highlighted
-in green.
 
 When doing local alignment, only the aligned substrings from both sequences will be uppercase,
 the rest will be lowercase, as seen below:
@@ -123,6 +120,14 @@ Created score matrix with highlighted moves (saved as score_matrix.html) in the 
 ```
 
 Note: Use python3 instead of python when running the command on MacOS.
+
+## File outputs
+
+- `alignment.txt`: Aligned strings with the match string in between as seen in the terminal output.
+Best to visualize long sequences.
+- `score_matrix.html`: Table representation of the score matrix, with the moves taken during traceback
+highlighted in green. Once again it allows the visualization of large alignments, since the matrix
+will not be shown entirely in the terminal if it's too large.
 
 ## Different optimal alignments
 
