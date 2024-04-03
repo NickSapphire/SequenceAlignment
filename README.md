@@ -7,7 +7,7 @@ for sequence alignment.
 
 This program relies on the numpy and pandas libraries.
 
-Pandas provides a nice visual representation for the score matrix, since it allows the use
+Pandas provides a nice visual representation for the score matrix, it allows the use
 of string indices for rows and columns and has built-in functions to create html representations
 of matrices as tables. NumPy facilitated some tasks such as generating a matrix with all zeros and
 finding the largest value in the matrix.
@@ -53,6 +53,8 @@ ATCGATCGATCG
 || |.|.|.|.|
 AT-GCTAGCTAG
 
+Created text file containing the optimal alignment (saved as alignment.txt)
+
 Method used: global
 Alignment score: 8
 
@@ -91,6 +93,8 @@ tfderilgQTYWAECla
         ||.| ||         
         QTFW-ECikgdnaty
 
+Created text file containing the optimal alignment (saved as alignment.txt)
+
 Method used: local
 Alignment score: 7
 
@@ -119,6 +123,13 @@ Created score matrix with highlighted moves (saved as score_matrix.html) in the 
 ```
 
 Note: Use python3 instead of python when running the command on MacOS.
+
+## Different optimal alignments
+
+It's possible that more than one traceback path will yield the score written in the final cell.
+This program will only compute one of the multiple optimal alignments. If a match was not found, it will
+check if it can move diagonally (mismatch), left or up respectively. This is a somewhat arbitrary decision,
+mostly based around the fact that mismatches usually cause a lighter penalty than gaps. 
 
 ## Contact
 

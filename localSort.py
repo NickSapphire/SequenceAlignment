@@ -16,7 +16,12 @@ def initializeMatrix(seq1: str, seq2: str) -> pd.DataFrame:
     return matrix
 
 
-def getNeighbours(matrix, coords: tuple) -> tuple:
+def getNeighbours(matrix: pd.DataFrame, coords: tuple) -> tuple:
+    """
+    Returns a tuple containing all 3 neighbours obtained by moving left and/or up
+    of a given set of coordinates of a matrix.
+    nb1: vertical move, nb2: diagonal move (upper-left), nb3: horizontal move.
+    """
     i, j = coords
     nb1 = matrix.iloc[i, j - 1]
     nb2 = matrix.iloc[i - 1, j - 1]
@@ -24,7 +29,7 @@ def getNeighbours(matrix, coords: tuple) -> tuple:
     return nb1, nb2, nb3
 
 
-def cellScore(matrix, coords: tuple, match, mismatch, gap):
+def cellScore(matrix: pd.DataFrame, coords: tuple, match: int, mismatch: int, gap: int) -> int:
     """
     Given two sequences, their score matrix and a coordinate tuple (row, col), computes
     the score of the specified cell.
@@ -38,11 +43,10 @@ def cellScore(matrix, coords: tuple, match, mismatch, gap):
     else:
         # If the three possible moves have a negative score, the score is set to 0
         score = max(nb1 + gap, nb2 + mismatch, nb3 + gap, 0)
-
     return score
 
 
-def fillMatrix(matrix, match, mismatch, gap):
+def fillMatrix(matrix: pd.DataFrame, match: int, mismatch: int, gap: int) -> int:
     """
     Takes an initialized score matrix, fills it by in-place modification and
     returns the optimal alignment score (highest score value in the matrix).
@@ -50,10 +54,10 @@ def fillMatrix(matrix, match, mismatch, gap):
     for i in range(1, matrix.shape[0]):
         for j in range(1, matrix.shape[1]):
             matrix.iloc[i, j] = cellScore(matrix, (i, j), match, mismatch, gap)
-    return matrix.max(axis=None)
+    return matrix.max(axis=None)  # axis set to None to scan the whole matrix
 
 
-def traceback(matrix: pd.DataFrame, match, mismatch, gap):
+def traceback(matrix: pd.DataFrame, match, mismatch, gap) -> tuple:
     """
     Performs the traceback operation from the cell with the highest value up to the first
     cell found whose neighbours are all zero and returns the optimal alignment as a string
@@ -67,42 +71,37 @@ def traceback(matrix: pd.DataFrame, match, mismatch, gap):
     seq2 = "".join(matrix.columns[j + 1:]).lower()
     match_string = " " * abs(i - j)  # Will connect matches with a "|" character in the final output
     moves = []
+    nb1, nb2, nb3 = getNeighbours(matrix, (i, j))
+    score = matrix.iloc[i, j]
 
-    while getNeighbours(matrix, (i, j)) != (0, 0, 0):
+    while score != 0:
         moves.append((i, j))
-        score = matrix.iloc[i, j]
-        if matrix.iloc[i - 1, j - 1] + match == score and matrix.index[i] == matrix.columns[j]:
+        if nb2 + match == score and matrix.index[i] == matrix.columns[j]:
             seq1 = matrix.index[i] + seq1
             seq2 = matrix.columns[j] + seq2
             i -= 1
             j -= 1
             match_string = "|" + match_string
-        elif matrix.iloc[i - 1, j - 1] + mismatch == score:
+        elif nb2 + mismatch == score:
             seq1 = matrix.index[i] + seq1
             seq2 = matrix.columns[j] + seq2
             i -= 1
             j -= 1
             match_string = "." + match_string
-        elif matrix.iloc[i - 1, j] + gap == score:
+        elif nb3 + gap == score:
             seq1 = matrix.index[i] + seq1
             seq2 = "-" + seq2
             i -= 1
             match_string = " " + match_string
-        elif matrix.iloc[i, j - 1] + gap == score:
+        elif nb1 + gap == score:
             seq1 = "-" + seq1
             seq2 = matrix.columns[j] + seq2
             j -= 1
             match_string = " " + match_string
         else:
             raise ValueError("Invalid score matrix")
-
-    # It escapes the while loop at the first match, so we need to add it
-    seq1 = matrix.index[i] + seq1
-    seq2 = matrix.columns[j] + seq2
-    moves.append((i, j))
-    i -= 1
-    j -= 1
-    match_string = "|" + match_string
+        nb1, nb2, nb3 = getNeighbours(matrix, (i, j))
+        score = matrix.iloc[i, j]
 
     # Add the unaligned prefixes to both strings, if they exist
     if i != 0:
@@ -110,14 +109,14 @@ def traceback(matrix: pd.DataFrame, match, mismatch, gap):
     if j != 0:
         seq2 = "".join(matrix.columns[1:j+1]).lower() + seq2
 
-    # If seq1 and seq2 are misaligned, add spaces at the start of the string with the
-    # most lowercase characters on the left. Then realign match_string
+    # If misaligned, add spaces at the start of the string with the most lowercase characters on the left.
     spaces = abs(i - j) * " "
     if i < j:
         seq1 = spaces + seq1
+        match_string = j * " " + match_string   # Realign match_string to the start of uppercase letters
     elif j < i:
         seq2 = spaces + seq2
-    match_string = spaces + match_string
+        match_string = i * " " + match_string
 
     return f"{seq1}\n{match_string}\n{seq2}", moves
 
@@ -137,8 +136,7 @@ def matrix_to_html(matrix, moves):
     # style doesn't admit non-unique indices, converting to numpy gets rid of the labels
     matrix_copy = pd.DataFrame(matrix.to_numpy(), index=range(matrix.shape[0]),
                                columns=range(matrix.shape[1]))
-    styled_matrix = matrix_copy.style.apply(highlight_moves, axis=None)
-    matrix_copy.set_axis(range(matrix_copy.shape[1]), axis=1)
+    styled_matrix = matrix_copy.style.apply(highlight_moves, axis=None)  # colors the coordinates in moves
     styled_matrix.set_table_attributes('border=1 class="dataframe"')
     html = styled_matrix.to_html()
 
